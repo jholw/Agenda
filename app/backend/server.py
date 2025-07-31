@@ -14,10 +14,12 @@ from enum import Enum
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# ...existing code...
 # Conexão MongoDB
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.getenv('MONGO_URL')
+db_name = os.getenv('DB_NAME')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[db_name]
 
 # Crie o aplicativo principal sem um prefixo
 app = FastAPI()
@@ -92,6 +94,15 @@ class ProjectUpdate(BaseModel):
     status: Optional[ProjectStatus] = None
 
 # Tarefas das Rotas
+@api_router.get("/test-db")
+async def test_db():
+    try:
+        # Tenta listar os bancos disponíveis
+        dbs = await client.list_database_names()
+        return {"success": True, "databases": dbs}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @api_router.get("/tasks", response_model=List[Task])
 async def get_tasks(status: Optional[TaskStatus] = None, project_id: Optional[str] = None):
     filter_dict = {}
